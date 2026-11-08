@@ -1,0 +1,7 @@
+{
+  "name": "playpilot",
+  "version": "0.2.0",
+  "description": "Agent playtesting for mobile games: play iOS and Android games step by step on simulators and report crashes, softlocks and broken UI with frames, video and replays.",
+  "license": "Apache-2.0",
+  "keywords": ["playtesting", "qa", "mobile", "games", "ios", "android", "simulator", "unity"]
+}
