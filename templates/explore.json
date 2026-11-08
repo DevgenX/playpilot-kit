@@ -1,0 +1,14 @@
+{
+  "name": "explore",
+  "app": "com.example.mygame",
+  "platform": "ios",
+  "mode": "explore",
+  "goal": "Explore every screen you can reach and report anything broken",
+  "maxSteps": 40,
+  "maxMinutes": 15,
+  "seed": 1,
+  "simslim": {
+    "profile": "simslim-game.json",
+    "requires": []
+  }
+}
