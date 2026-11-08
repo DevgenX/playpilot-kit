@@ -1,0 +1,11 @@
+{
+  "name": "smoke",
+  "app": "com.example.mygame",
+  "platform": "ios",
+  "mode": "scripted",
+  "goal": "Start a game from the home screen",
+  "script": ["Play"],
+  "success": { "label": "Pause" },
+  "maxSteps": 10,
+  "video": false
+}
