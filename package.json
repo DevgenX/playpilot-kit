@@ -1,0 +1,46 @@
+{
+  "name": "playpilot",
+  "version": "0.2.0",
+  "description": "Agent playtesting for mobile games: an agent or a seeded explorer plays your iOS or Android game on simulators and reports crashes, softlocks and broken UI with frames, video and replays.",
+  "keywords": [
+    "playtesting",
+    "qa",
+    "mobile",
+    "games",
+    "ios",
+    "android",
+    "simulator",
+    "agent",
+    "unity",
+    "claude-code"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DevgenX/playpilot-kit.git"
+  },
+  "type": "module",
+  "bin": {
+    "playpilot": "dist/src/cli.js"
+  },
+  "files": [
+    "dist/src",
+    "templates",
+    "skills",
+    "probes",
+    "docs",
+    ".claude-plugin"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test \"dist/test/**/*.test.js\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0"
+  }
+}
