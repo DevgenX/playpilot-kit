@@ -1,0 +1,5 @@
+{
+  "name": "game",
+  "description": "Playtesting games: slim the simulator, but keep the game controller and game save services",
+  "keep": ["com.apple.GameController.gamecontrollerd", "com.apple.gamesaved"]
+}
