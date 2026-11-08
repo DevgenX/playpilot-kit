@@ -1,0 +1,11 @@
+{
+  "name": "playpilot-kit",
+  "owner": { "name": "PlayPilot" },
+  "plugins": [
+    {
+      "name": "playpilot",
+      "source": "./",
+      "description": "Agent playtesting for mobile games on iOS simulators and Android."
+    }
+  ]
+}
