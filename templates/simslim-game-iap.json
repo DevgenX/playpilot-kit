@@ -1,0 +1,6 @@
+{
+  "name": "game-iap",
+  "description": "Games with in-app purchases: also keep StoreKit and push (the store category)",
+  "except": ["store"],
+  "keep": ["com.apple.GameController.gamecontrollerd", "com.apple.gamesaved"]
+}
