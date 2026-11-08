@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.playpilot/
+runs/
+*.log
+.env
+.env.*
+*.ad
+*.mp4
+*.png
+!docs/**/*.png
