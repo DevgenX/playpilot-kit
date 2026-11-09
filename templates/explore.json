@@ -7,8 +7,8 @@
   "maxSteps": 40,
   "maxMinutes": 15,
   "seed": 1,
-  "simslim": {
-    "profile": "simslim-game.json",
+  "slim": {
+    "profile": "slim-game.json",
     "requires": []
   }
 }
