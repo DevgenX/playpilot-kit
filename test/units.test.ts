@@ -190,9 +190,9 @@ describe("scenario", () => {
 
   it("resolves the slim profile against the scenario folder and applies safe defaults", () => {
     const s = parseScenario({ name: "x", app: "a", slim: { profile: "slim.json" } }, "/games/mine/playpilot");
-    assert.equal(s.simslim?.profile, "/games/mine/playpilot/slim.json");
+    assert.equal(s.slim?.profile, "/games/mine/playpilot/slim.json");
     const old = parseScenario({ name: "x", app: "a", simslim: { profile: "slim.json" } }, "/games/mine/playpilot");
-    assert.equal(old.simslim?.profile, "/games/mine/playpilot/slim.json", "the old key still works");
+    assert.equal(old.slim?.profile, "/games/mine/playpilot/slim.json", "the old key still works");
     assert.throws(() => parseScenario({ name: "x", app: "a", slim: {}, simslim: {} }), /"slim" only/);
     const moved = absolutize({ name: "x", app: "a", slim: { profile: "slim.json" } }, "/games/mine/playpilot") as { slim: { profile: string } };
     assert.equal(moved.slim.profile, "/games/mine/playpilot/slim.json");
