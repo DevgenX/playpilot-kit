@@ -310,24 +310,34 @@ export class Playtest {
     const frame = join(this.deps.outDir, "frames", frameName(step));
     // what this observation finds was caused by the previous action; its frame shows the result
     const cause = Math.max(0, step - 1);
-    const failures: Finding[] = [];
+    let failures: Finding[] = [];
+    let snapshot: { nodes: UiNode[]; viewport: Viewport | null };
+    let features: Uint8Array | null;
+    let probeState: ProbeState | null;
 
-    if (this.probe) {
-      for (let waited = 0; waited < 10_000 && (await this.probe.state())?.busy; waited += 250) await this.sleep(250);
+    // The frame and the options must show the same screen. A tap can land, or a screen finish drawing, while the
+    // screenshot is taken: the probe is read before and after it, and a frame taken across a change is taken again.
+    for (let tries = 1; ; tries += 1) {
+      if (this.probe) {
+        for (let waited = 0; waited < 10_000 && (await this.probe.state())?.busy; waited += 250) await this.sleep(250);
+      }
+      const before = this.probe ? await this.probe.state() : null;
+      failures = [];
+      const taken = failures;
+      [snapshot, features] = await Promise.all([
+        this.device.snapshot().catch((error: unknown) => {
+          taken.push(finding("command_failed", cause, `Snapshot failed: ${message(error)}`));
+          return { nodes: [] as UiNode[], viewport: null };
+        }),
+        this.captureFrame(frame).catch((error: unknown) => {
+          taken.push(finding("command_failed", cause, `Screenshot failed: ${message(error)}`));
+          return null;
+        }),
+      ]);
+      probeState = this.probe ? await this.probe.state() : null;
+      const steady = !probeState?.busy && probeState?.scene === before?.scene && probeState?.screen === before?.screen;
+      if (!this.probe || steady || tries >= 3) break;
     }
-    const [snapshot, features] = await Promise.all([
-      this.device.snapshot().catch((error: unknown) => {
-        failures.push(finding("command_failed", cause, `Snapshot failed: ${message(error)}`));
-        return { nodes: [] as UiNode[], viewport: null };
-      }),
-      this.captureFrame(frame).catch((error: unknown) => {
-        failures.push(finding("command_failed", cause, `Screenshot failed: ${message(error)}`));
-        return null;
-      }),
-    ]);
-    // read after the frame: on a slow device a screen can finish drawing while the screenshot is taken, and options
-    // read before it would name the screen the frame no longer shows
-    const probeState = this.probe ? await this.probe.state() : null;
     const viewport = snapshot.viewport ?? s.last?.viewport ?? { width: 0, height: 0 };
     const frameInfo = features ? await this.processFrame(frame, features, snapshot.viewport) : null;
     s.observedStep = step;
