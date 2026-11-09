@@ -49,17 +49,13 @@ See [docs/architecture.md](docs/architecture.md).
 
 ## Install
 
-Requires macOS with Xcode for iOS and Node 22.12 or later. PlayPilot drives the simulator through two command-line tools; install them once:
+Requires macOS with Xcode for iOS and Node 22.12 or later. PlayPilot drives the device through one command-line tool; install it once:
 
 ```bash
 npm install -g agent-device
 ```
 
-```bash
-brew install mobai-app/tap/simslim
-```
-
-The second one is optional (slim simulators). Add `adb` for Android.
+Add `adb` for Android.
 
 Then install PlayPilot:
 
@@ -111,7 +107,7 @@ Then ask: "playtest my game on the booted simulator and report anything broken".
 | --- | --- |
 | `doctor` | Checks the device tools (and stale daemons), Xcode, adb and disk |
 | `init` | Writes starter scenarios and profiles |
-| `sim prepare/verify/measure` | Slims a simulator, checks it for drift, or measures it |
+| `sim prepare/verify/restore/measure/categories` | Slims a simulator, checks it for drift, switches it back to stock, measures its memory, or lists what slimming turns off |
 | `run` | Autonomous explore or scripted run. No model, seeded, good for CI |
 | `plan` | Prints the commands a run starts with, without a device |
 | `agent start/act/observe/note/finish` | One command per step for an agent |
@@ -141,6 +137,17 @@ A probe is a small, development-only component in the game that shares its own v
 
 - Unity: [probes/unity](probes/unity), a UPM package. Add it and it starts itself in development builds.
 - Anything else: [docs/probe-protocol.md](docs/probe-protocol.md) is short, file-based and engine-neutral.
+
+## Slim simulators
+
+A stock iOS simulator runs about 240 background processes that a game never uses (Siri, Spotlight, iCloud sync, Health, wallpaper posters and more). `playpilot sim prepare <udid>` switches them off and reboots once:
+
+| | Processes | Memory |
+| --- | --- | --- |
+| Stock iPhone simulator, settled | 242 | 2,752 MB |
+| Slim (`slim-game.json`) | 78 | 697 MB |
+
+That is about a quarter of the memory, so several agents can play at once on one Mac. Game Center, game controllers and saved games are never touched. Profiles keep whole categories on with `except` (for example `["store"]` for in-app purchases) and single services with `keep`. Run `playpilot sim categories` to see what each one turns off, and `playpilot sim restore <udid>` to go back to stock. A simulator that already matches its profile is left alone, so calling `prepare` before every run costs about five seconds.
 
 ## Safety
 
