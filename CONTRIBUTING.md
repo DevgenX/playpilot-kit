@@ -8,7 +8,7 @@ npm install
 npm test
 ```
 
-The tests run against a fake game (`test/fakeGame.ts`) that answers with the same JSON shapes as the real agent-device, simctl and simslim, so they pass on any OS without a device.
+The tests run against a fake game (`test/fakeGame.ts`) that answers with the same JSON shapes as the real device tools, so they pass on any OS without a device.
 
 When you change how PlayPilot reads a real tool:
 
