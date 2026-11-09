@@ -9,11 +9,11 @@ You play the game one step at a time through `playpilot agent`. Each command act
 
 ## Before you start
 
-1. `playpilot doctor` must pass. If it reports a stale agent-device daemon, run the fix it prints.
+1. `playpilot doctor` must pass. If it reports a stale device daemon, run the fix it prints.
 2. Know the booted simulator: `xcrun simctl list devices booted`. Use its UDID with `--udid`.
 3. The game must be a development build installed on that simulator.
 4. Find the scenario (`playpilot/*.json` in the repo). If there is none, run `playpilot init --app <bundle-id>` and use `playpilot/explore.json`. See [references/scenarios.md](references/scenarios.md) to write one for the user's goal.
-5. If the scenario has a `simslim` profile, run `playpilot sim prepare <udid> --profile <profile>` once (fast no-op when already slim).
+5. If the scenario has a `slim` profile, run `playpilot sim prepare <udid> --profile <profile>` once (fast no-op when already slim).
 
 ## The loop
 
