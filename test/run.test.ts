@@ -191,6 +191,27 @@ describe("cli", () => {
     }
   });
 
+  it("frames the screen the options name when a tap lands while the screenshot is taken", async () => {
+    const { root } = await workspace();
+    const game = fakeGame({ root, probe: true, inputLag: true });
+    const scenarioPath = join(root, "scenario.json");
+    await (await import("node:fs/promises")).writeFile(scenarioPath, JSON.stringify({ ...base, video: false }));
+    const cwd = process.cwd();
+    process.chdir(root);
+    try {
+      const io = capture();
+      assert.equal(await main(["agent", "start", scenarioPath, "--out", "runs/input"], game.exec, io), 0, io.text.join("\n"));
+      const act = capture();
+      assert.equal(await main(["agent", "act", "button:Play"], game.exec, act), 0, act.text.join("\n"));
+      assert.match(act.text.join("\n"), /screen=level/);
+      const shot = decodePng(await readFile(join(root, "runs/input/frames/step-001.png")));
+      // the Level screen is green: a blue frame is Home, which the options no longer describe
+      assert.deepEqual([...shot.data.slice(0, 3)], [20, 140, 60]);
+    } finally {
+      process.chdir(cwd);
+    }
+  });
+
   it("drives an agent session one command per step, across processes", async () => {
     const { root } = await workspace();
     const game = fakeGame({ root });
