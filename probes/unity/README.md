@@ -87,7 +87,7 @@ static IEnumerator WaitAction(IDictionary<string, object> args)
 uGUI targets are found automatically. A `Selectable` is listed when it is enabled, interactable, inside an enabled canvas, not hidden by a `CanvasGroup` (alpha 0 or blocks raycasts off) and at least partly on screen. Up to 60 targets are listed; your provider targets come first.
 
 - **id**: the `PlayPilotLabel` component's `id`, else the hierarchy path (`Canvas/Pause/Resume`). Repeated ids get `#2`, `#3`.
-- **label**: the `PlayPilotLabel` component's `label`, else the text of the first child `Text`, else the GameObject name. For TextMesh Pro buttons, add a `PlayPilotLabel` to get a readable label.
+- **label**: the `PlayPilotLabel` component's `label`, else the text of the first child `Text`, else of the first child TextMesh Pro text (found by name, so the package does not depend on TextMesh Pro), else the GameObject name. Rich text tags are removed. Icon-only buttons get the GameObject name; add a `PlayPilotLabel` to give them a readable one.
 - **kind**: `button`, `toggle`, `slider`, `scrollbar`, `dropdown`, `input` or `selectable`.
 
 For your own targets, return `PlayPilotTarget` values with `screenRect` in **screen pixels, Unity screen space (origin at the bottom left)**, the space `Camera.WorldToScreenPoint` returns. The probe clips each rect to the screen and converts it to the protocol's top-left centre and size fractions. Targets without an `id` are skipped; an empty `kind` becomes `custom`.
