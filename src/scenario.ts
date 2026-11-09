@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, resolve } from "node:path";
 import type { DeviceAction, Point } from "./harness/types.js";
+import { CATEGORY_IDS } from "./slim/catalog.js";
 
 /** A playtest request, committed next to the game as JSON. See templates/ and docs/scenarios.md. */
 export interface Scenario {
@@ -9,8 +10,8 @@ export interface Scenario {
   readonly app: string;
   readonly platform: "ios" | "android";
   readonly device: { readonly udid?: string; readonly name?: string; readonly serial?: string };
-  /** Slim-simulator profile (absolute path, resolved against the scenario file) and the features the game needs. Scenario key `slim`. */
-  readonly simslim: { readonly profile?: string; readonly requires: readonly string[] } | null;
+  /** Slim-simulator profile (absolute path, resolved against the scenario file) and the categories the game needs kept on. Scenario key `slim`. */
+  readonly slim: { readonly profile?: string; readonly requires: readonly string[] } | null;
   readonly mode: "explore" | "scripted";
   readonly goal: string;
   readonly maxSteps: number;
@@ -57,6 +58,13 @@ export const DEFAULT_AVOID: readonly string[] = [
   "erase",
   "unsubscribe",
 ];
+
+/** Slim categories a game needs kept on (see `playpilot sim categories`). */
+function categoryList(ids: string[], where: string): string[] {
+  const unknown = ids.filter((id) => !CATEGORY_IDS.includes(id));
+  if (unknown.length > 0) throw new ScenarioError(`${where}: unknown categor(ies) ${unknown.join(", ")} (known: ${CATEGORY_IDS.join(", ")})`);
+  return ids;
+}
 
 export class ScenarioError extends Error {
   override readonly name = "ScenarioError";
@@ -201,14 +209,14 @@ export function parseScenario(raw: unknown, baseDir = process.cwd()): Scenario {
   // "slim" is the documented key; "simslim" is still read for scenarios written before the rename
   if (r["slim"] !== undefined && r["simslim"] !== undefined) throw new ScenarioError(`use "slim" only (not both "slim" and "simslim")`);
   const slimKey = r["slim"] !== undefined ? "slim" : "simslim";
-  let simslim: Scenario["simslim"] = null;
+  let slim: Scenario["slim"] = null;
   if (r[slimKey] !== undefined) {
     const s = obj(r[slimKey], slimKey);
     const profile = s["profile"];
     if (profile !== undefined && (typeof profile !== "string" || profile === "")) throw new ScenarioError(`${slimKey}.profile must be a file path`);
-    simslim = {
+    slim = {
       ...(typeof profile === "string" ? { profile: isAbsolute(profile) ? profile : resolve(baseDir, profile) } : {}),
-      requires: strList(s["requires"], `${slimKey}.requires`),
+      requires: categoryList(strList(s["requires"], `${slimKey}.requires`), `${slimKey}.requires`),
     };
   }
 
@@ -270,7 +278,7 @@ export function parseScenario(raw: unknown, baseDir = process.cwd()): Scenario {
     app: str("app"),
     platform,
     device,
-    simslim,
+    slim,
     mode,
     goal: str("goal", "Explore the game and report anything that looks or behaves broken"),
     maxSteps: num("maxSteps", 30, 1, 1000),
