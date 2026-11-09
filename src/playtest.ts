@@ -315,7 +315,7 @@ export class Playtest {
     if (this.probe) {
       for (let waited = 0; waited < 10_000 && (await this.probe.state())?.busy; waited += 250) await this.sleep(250);
     }
-    const [snapshot, features, probeState] = await Promise.all([
+    const [snapshot, features] = await Promise.all([
       this.device.snapshot().catch((error: unknown) => {
         failures.push(finding("command_failed", cause, `Snapshot failed: ${message(error)}`));
         return { nodes: [] as UiNode[], viewport: null };
@@ -324,8 +324,10 @@ export class Playtest {
         failures.push(finding("command_failed", cause, `Screenshot failed: ${message(error)}`));
         return null;
       }),
-      this.probe?.state() ?? Promise.resolve(null),
     ]);
+    // read after the frame: on a slow device a screen can finish drawing while the screenshot is taken, and options
+    // read before it would name the screen the frame no longer shows
+    const probeState = this.probe ? await this.probe.state() : null;
     const viewport = snapshot.viewport ?? s.last?.viewport ?? { width: 0, height: 0 };
     const frameInfo = features ? await this.processFrame(frame, features, snapshot.viewport) : null;
     s.observedStep = step;
