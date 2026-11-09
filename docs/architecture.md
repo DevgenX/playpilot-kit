@@ -92,4 +92,11 @@ A step "changed" the game when the screen id changed, or when more than 3% of a 
 
 ## Lean simulators
 
-`playpilot sim prepare` checks the simulator against the profile and only re-slims it when it drifted, so it is cheap to call before every run. Slim simulators use about a quarter of the memory, which lets several agents play at once on one Mac.
+`src/slim/catalog.ts` lists the background services a game does not need, in categories (Siri, search, iCloud, store, and so on). `src/adapters/slim.ts` switches them off with `launchctl disable` inside the simulator (`xcrun simctl spawn`), which persists across reboots, and reboots once so it takes effect.
+
+- `sim prepare` reads the simulator's current overrides, applies only the difference to the profile (eight services at a time) and reboots once. A simulator that already matches is left alone, so it is cheap to call before every run.
+- `sim verify` reports the drift without changing anything; `sim restore` switches the catalog back on.
+- Only services in the catalog are ever touched. Services that break a simulator when off (for example `nanoregistryd`, which hangs app launches) are kept out of it, and a test enforces that.
+- `sim measure` sums the physical memory footprint (`top`) of every process under the simulator's own `launchd_sim`.
+
+On an iPhone simulator with the iOS 27 runtime, a settled stock device ran 242 processes in 2,752 MB; the slim one ran 78 in 697 MB, and apps and games launched normally.
