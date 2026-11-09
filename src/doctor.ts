@@ -70,12 +70,6 @@ export async function doctor(exec: Exec, cwd = process.cwd()): Promise<Check[]> 
       checks.push({ name: "xcode", level: "ok", detail: `${booted} simulator(s) booted` });
       if (booted > 2) checks.push({ name: "simulators", level: "warn", detail: `${booted} simulators booted`, fix: "shut down the ones you are not testing on (xcrun simctl shutdown <udid>)" });
     }
-    const simslim = await exec("simslim", ["version"], { timeoutMs: 15_000 });
-    checks.push(
-      simslim.code === NOT_FOUND_CODE
-        ? { name: "simslim", level: "warn", detail: "not installed (optional: slim simulators use about a quarter of the memory)", fix: "brew install mobai-app/tap/simslim" }
-        : { name: "simslim", level: "ok", detail: firstLine(simslim.stdout || simslim.stderr) },
-    );
   }
 
   const adb = await exec("adb", ["version"], { timeoutMs: 15_000 });
