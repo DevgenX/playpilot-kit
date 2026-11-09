@@ -220,7 +220,7 @@ export class Playtest {
 
     if (scenario.simslim !== null && scenario.platform === "ios") {
       const udid = scenario.device.udid;
-      if (udid === undefined) throw new Error("simslim slims one simulator by UDID: set device.udid in the scenario or pass --udid <udid>");
+      if (udid === undefined) throw new Error("slimming works on one simulator by UDID: set device.udid in the scenario or pass --udid <udid>");
       const simslim = new Simslim(deps.exec);
       state.simulator = { ...state.simulator, repaired: await simslim.ensure(udid, scenario.simslim.profile) };
       if (scenario.simslim.requires.length > 0) {
