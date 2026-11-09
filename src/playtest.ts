@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { AgentDevice } from "./adapters/agentDevice.js";
 import { AdbTransport, LocalTransport, ProbeChannel } from "./adapters/probe.js";
 import { Simctl } from "./adapters/simctl.js";
-import { Simslim } from "./adapters/simslim.js";
+import { loadProfile, missingRequirements, Slimmer } from "./adapters/slim.js";
 import type { Exec } from "./exec.js";
 import { BlankScreenDetector, finding, memoryGrowth, newCrashReports, probeFindings, scanLog, slowStep, SoftlockDetector } from "./harness/detectors.js";
 import { bytesFeatures, decodePng, encodePng, frameFeatures, resize, thumbChange, VISIBLE_CHANGE, type FrameFeatures } from "./harness/image.js";
@@ -213,21 +213,20 @@ export class Playtest {
       last: null,
       softlock: null,
       blank: null,
-      simulator: { profile: scenario.simslim?.profile ?? null, repaired: false, footprintMb: null },
+      simulator: { profile: scenario.slim?.profile ?? null, repaired: false, footprintMb: null },
       finished: false,
     };
     await writeFile(join(deps.outDir, "scenario.json"), JSON.stringify(rawScenario, null, 2) + "\n", "utf8");
 
-    if (scenario.simslim !== null && scenario.platform === "ios") {
+    if (scenario.slim !== null && scenario.platform === "ios") {
       const udid = scenario.device.udid;
       if (udid === undefined) throw new Error("slimming works on one simulator by UDID: set device.udid in the scenario or pass --udid <udid>");
-      const simslim = new Simslim(deps.exec);
-      state.simulator = { ...state.simulator, repaired: await simslim.ensure(udid, scenario.simslim.profile) };
-      if (scenario.simslim.requires.length > 0) {
-        const doctor = await simslim.doctor(udid, scenario.simslim.requires);
-        if (!doctor.ok) throw new Error(`simslim doctor: features this game needs are switched off (${scenario.simslim.requires.join(", ")}). ${doctor.output.slice(0, 300)}`);
-      }
-      state.simulator = { ...state.simulator, footprintMb: (await simslim.measure(udid)).megabytes };
+      const profile = await loadProfile(scenario.slim.profile);
+      const needed = missingRequirements(profile, scenario.slim.requires);
+      if (needed.length > 0) throw new Error(`the slim profile switches off what this game needs (${needed.join(", ")}): add them to the profile's "except" list`);
+      const slimmer = new Slimmer(deps.exec);
+      state.simulator = { ...state.simulator, repaired: await slimmer.ensure(udid, profile) };
+      state.simulator = { ...state.simulator, footprintMb: (await slimmer.measure(udid)).megabytes };
     }
 
     const playtest = new Playtest(scenario, deps, memory, state);
