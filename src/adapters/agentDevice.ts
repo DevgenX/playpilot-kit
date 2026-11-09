@@ -2,8 +2,8 @@ import { asRecord, CommandError, formatCommand, safeJson, type Exec, type ExecRe
 import type { DeviceAction, Rect, Target, UiNode, Viewport } from "../harness/types.js";
 
 /**
- * Thin wrapper over the agent-device CLI (callstack/agent-device, MIT). PlayPilot shells out to the installed CLI and
- * reads its `--json` envelope (`{ success, data, error }`); no code is copied. Observation commands pass
+ * Device driver: shells out to the installed agent-device CLI and reads its `--json` envelope
+ * (`{ success, data, error }`). Observation commands pass
  * `--no-record` so the device session's own history holds only real inputs.
  */
 
