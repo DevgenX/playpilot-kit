@@ -41,7 +41,7 @@ Each step is observe, pick, act:
 
 1. **Observe.** One parallel call reads the accessibility tree, a screenshot (simctl, about 0.7 s) and the probe state. Frames are saved in screen points, so pixel coordinates in a frame are tap coordinates.
 2. **Pick.** The screen's legal options are listed: probe targets, game actions, accessible controls, your scenario's macros, and a tap grid when the screen offers nothing else. An agent picks by name, or the explorer picks the option it has tried least on this screen across all runs.
-3. **Act.** Device input goes through agent-device in one batch; game actions go through the probe and finish at frame accuracy inside the game.
+3. **Act.** Device input is sent in one batch; game actions go through the probe and finish at frame accuracy inside the game.
 
 Screens are identified by the probe's scene and screen, or by the accessibility labels, or by a perceptual hash of the frame, so memory survives restarts and builds. Changes are judged on a downscaled frame, so a small popup counts and video noise does not.
 
@@ -49,7 +49,7 @@ See [docs/architecture.md](docs/architecture.md).
 
 ## Install
 
-Requires macOS with Xcode for iOS, Node 22.12 or later, and:
+Requires macOS with Xcode for iOS and Node 22.12 or later. PlayPilot drives the simulator through two command-line tools; install them once:
 
 ```bash
 npm install -g agent-device
@@ -59,7 +59,7 @@ npm install -g agent-device
 brew install mobai-app/tap/simslim
 ```
 
-Optional: `adb` for Android.
+The second one is optional (slim simulators). Add `adb` for Android.
 
 Then install PlayPilot:
 
@@ -77,10 +77,10 @@ playpilot doctor
 playpilot init --app com.example.mygame
 ```
 
-This writes `playpilot/explore.json`, `playpilot/smoke.json` and simslim profiles into your repo. Boot a simulator, install a development build, then:
+This writes `playpilot/explore.json`, `playpilot/smoke.json` and slim-simulator profiles into your repo. Boot a simulator, install a development build, then:
 
 ```bash
-playpilot sim prepare <udid> --profile playpilot/simslim-game.json
+playpilot sim prepare <udid> --profile playpilot/slim-game.json
 ```
 
 ```bash
@@ -109,9 +109,9 @@ Then ask: "playtest my game on the booted simulator and report anything broken".
 
 | Command | What it does |
 | --- | --- |
-| `doctor` | Checks agent-device (and stale daemons), Xcode, simslim, adb and disk |
+| `doctor` | Checks the device tools (and stale daemons), Xcode, adb and disk |
 | `init` | Writes starter scenarios and profiles |
-| `sim prepare/verify/measure` | Slims a simulator with simslim, checks it for drift, or measures it |
+| `sim prepare/verify/measure` | Slims a simulator, checks it for drift, or measures it |
 | `run` | Autonomous explore or scripted run. No model, seeded, good for CI |
 | `plan` | Prints the commands a run starts with, without a device |
 | `agent start/act/observe/note/finish` | One command per step for an agent |
@@ -130,7 +130,7 @@ runs/first/
   frames/          step-NNN.png, one per observation, in screen points
   run.mp4          the whole run, plus contact-sheet.png
   steps.json       replayable steps (playpilot replay)
-  replay.ad        the same as an agent-device script
+  replay.ad        the same steps as a standalone device script
 ```
 
 Memory lives in `.playpilot/memory/<app>.json` and is shared by every run of that app.
@@ -150,13 +150,9 @@ A probe is a small, development-only component in the game that shares its own v
 
 ## Limits
 
-- Physical iPhones work through agent-device, but the probe file channel and fast simctl screenshots are simulator-only.
-- Android is supported through agent-device and adb but has had less real-device testing than iOS.
+- Physical iPhones work, but the probe file channel and fast screenshots are simulator-only.
+- Android is supported but has had less real-device testing than iOS.
 - Each device step takes about a second. Timing-critical play (rhythm, reflexes) belongs in probe game actions, not taps.
-
-## Credits
-
-PlayPilot builds on [agent-device](https://github.com/callstack/agent-device) (MIT) for device control and [simslim](https://github.com/MobAI-App/simslim) (MIT) for lean simulators, and its option loop follows the game-agent design of [Aura Autopilot](https://github.com/ramenvr/autopilot) (Apache-2.0), re-implemented here. See [NOTICE](NOTICE).
 
 ## License
 
