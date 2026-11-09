@@ -43,6 +43,7 @@ namespace PlayPilotKit
 
         string _scene = "";
         string _targetsJson = "[]";
+        string _scannedScreen;
         string _lastBody;   // state.json content after "time", as last written
         string _lastLogLine;
         int _seq;
@@ -124,6 +125,13 @@ namespace PlayPilotKit
                 _nextInboxPoll = now + InboxPollInterval;
                 // One command at a time: a command sent while an action runs waits in inbox.json.
                 if (!_actionRunning) PollInbox();
+            }
+
+            // A new screen gets its targets in the same write, not up to a scan interval later.
+            if (!ReferenceEquals(PlayPilot.CurrentScreen, _scannedScreen))
+            {
+                _scannedScreen = PlayPilot.CurrentScreen;
+                _nextTargetScan = 0;
             }
 
             if (now >= _nextTargetScan)
