@@ -21,11 +21,11 @@ export const VERSION = "0.2.0";
 const HELP = `playpilot ${VERSION}: agent playtesting for mobile games
 
 Setup
-  playpilot doctor [--json]                     check agent-device, Xcode, simslim, adb, disk
+  playpilot doctor [--json]                     check device tools, Xcode, adb and disk
   playpilot init [--app <bundle-id>] [--dir playpilot] [--force]
                                                 write starter scenarios into this repo
   playpilot sim prepare|verify|measure <udid> [--profile <file>]
-                                                slim a simulator (simslim), check drift, or measure it
+                                                slim a simulator, check it for drift, or measure it
 
 Autonomous runs (no model; free, seeded, good for CI)
   playpilot run <scenario.json> [--out <dir>] [--udid <udid>] [--seed <n>] [--steps <n>] [--fail-on <severity>]
