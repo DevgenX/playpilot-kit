@@ -1,7 +1,6 @@
 /**
- * The harness contract. The idea (game-level options with their own facts, a decider that picks only among legal
- * options, executors that do the precise input) is credited to Aura Autopilot (ramenvr/autopilot, Apache-2.0).
- * This is an independent TypeScript implementation for mobile games.
+ * The harness contract: game-level options with their own facts, a decider that picks only among legal options,
+ * and executors that do the precise input.
  */
 
 export interface Point {
