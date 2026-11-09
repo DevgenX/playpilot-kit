@@ -4,8 +4,7 @@ import { hashDistance } from "./image.js";
 import type { MemoryView, ProbeState, UiNode } from "./types.js";
 
 /**
- * Per-game memory kept between runs: the screens seen and how each option fared on each. Autopilot keeps verified
- * notes and reusable harness code per project; this is the data-only version of that loop, so every run explores
+ * Per-game memory kept between runs: the screens seen and how each option fared on each, so every run explores
  * what earlier runs did not and skips what always failed.
  */
 interface OptionStats {
