@@ -2,9 +2,10 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Exec, ExecResult } from "../src/exec.js";
 import { encodePng, type Image } from "../src/harness/image.js";
+import { FakeSimulator } from "./fakeSim.js";
 
 /**
- * A small fake mobile game behind fake agent-device, xcrun simctl and simslim CLIs, answering with the JSON
+ * A small fake mobile game behind fake agent-device and xcrun simctl CLIs, answering with the JSON
  * shapes agent-device 0.21 really prints, so the whole loop runs on any OS.
  *
  * Screens (viewport 400x200 points, landscape; simctl screenshots are 3x like a retina simulator):
@@ -55,6 +56,7 @@ export interface FakeGame {
   readonly exec: Exec;
   readonly calls: string[][];
   readonly purchases: number;
+  readonly sim: FakeSimulator;
   screen(): Screen;
   /** Lets the in-game probe handle its inbox (call from the test's sleep). */
   tick(): Promise<void>;
@@ -63,7 +65,8 @@ export interface FakeGame {
 export interface FakeOptions {
   readonly root: string;
   readonly probe?: boolean;
-  readonly simslimOk?: boolean;
+  /** Services already switched off on the fake simulator. */
+  readonly disabled?: readonly string[];
 }
 
 function frame(screen: Screen, frameNo: number, scale: number): Image {
@@ -102,6 +105,7 @@ const fail = (code: string, message: string, reason?: string): ExecResult => ({
 });
 
 export function fakeGame(options: FakeOptions): FakeGame {
+  const sim = new FakeSimulator(UDID, { disabled: options.disabled ?? [] });
   const { root } = options;
   const logPath = join(root, "app.log");
   const container = join(root, "container");
@@ -245,11 +249,8 @@ export function fakeGame(options: FakeOptions): FakeGame {
 
   const exec: Exec = async (command, args) => {
     calls.push([command, ...args]);
-    if (command === "simslim") {
-      if (args[0] === "verify") return options.simslimOk === false ? { code: 1, stdout: "drift", stderr: "" } : { code: 0, stdout: "", stderr: "" };
-      if (args[0] === "measure") return { code: 0, stdout: JSON.stringify({ processes: 70, bytes: 943_718_400 }), stderr: "" };
-      return { code: 0, stdout: "", stderr: "" };
-    }
+    const fromSim = sim.handle(command, args);
+    if (fromSim !== null) return fromSim;
     if (command === "xcrun") {
       if (args[1] === "io") {
         frameNo += 1;
@@ -287,7 +288,7 @@ export function fakeGame(options: FakeOptions): FakeGame {
     }
   };
 
-  return { exec, calls, get purchases() { return purchases; }, screen: () => screen, tick };
+  return { exec, calls, sim, get purchases() { return purchases; }, screen: () => screen, tick };
 }
 
 export function crashDirOf(root: string): string {
