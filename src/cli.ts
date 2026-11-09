@@ -4,7 +4,8 @@ import { mkdir, mkdtemp, readdir, readFile, stat, writeFile } from "node:fs/prom
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Simslim } from "./adapters/simslim.js";
+import { loadProfile, Slimmer } from "./adapters/slim.js";
+import { CATEGORIES } from "./slim/catalog.js";
 import { doctor } from "./doctor.js";
 import { formatCommand, recordingExec, spawnExec, type Exec, type PlannedCommand } from "./exec.js";
 import type { DeviceAction, GameOption, Severity } from "./harness/types.js";
@@ -24,8 +25,10 @@ Setup
   playpilot doctor [--json]                     check device tools, Xcode, adb and disk
   playpilot init [--app <bundle-id>] [--dir playpilot] [--force]
                                                 write starter scenarios into this repo
-  playpilot sim prepare|verify|measure <udid> [--profile <file>]
-                                                slim a simulator, check it for drift, or measure it
+  playpilot sim prepare|verify <udid> [--profile <file>]
+                                                slim a simulator (reboots only on change), or check it
+  playpilot sim restore|measure <udid>          switch everything back on, or measure its memory
+  playpilot sim categories                      what each slim category switches off
 
 Autonomous runs (no model; free, seeded, good for CI)
   playpilot run <scenario.json> [--out <dir>] [--udid <udid>] [--seed <n>] [--steps <n>] [--fail-on <severity>]
@@ -321,17 +324,35 @@ export async function main(argv: readonly string[], exec: Exec = spawnExec, io: 
       }
       case "sim": {
         const sub = args.shift();
-        const profile = flag(args, "--profile");
-        const udid = args.shift();
-        if (!udid) throw new UsageError("sim needs a simulator udid");
-        const simslim = new Simslim(exec);
-        if (sub === "prepare") {
-          io.out((await simslim.ensure(udid, profile)) ? `slimmed ${udid}` : `${udid} already matches the profile`);
+        if (sub === "categories") {
+          for (const c of CATEGORIES) io.out(`${c.id.padEnd(13)} ${c.title} (${c.labels.length} services). Off: ${c.effect}`);
           return 0;
         }
-        if (sub === "verify") return (await simslim.verify(udid, profile)) ? 0 : 1;
+        const profilePath = flag(args, "--profile");
+        const udid = args.shift();
+        if (!udid) throw new UsageError("sim needs a simulator udid");
+        const slimmer = new Slimmer(exec);
+        if (sub === "prepare") {
+          io.out((await slimmer.ensure(udid, await loadProfile(profilePath))) ? `slimmed ${udid}` : `${udid} already matches the profile`);
+          return 0;
+        }
+        if (sub === "verify") {
+          const drift = await slimmer.verify(udid, await loadProfile(profilePath));
+          if (drift.missing.length === 0 && drift.extra.length === 0) {
+            io.out(`${udid} matches the profile`);
+            return 0;
+          }
+          if (drift.missing.length > 0) io.out(`still on (should be off): ${drift.missing.join(", ")}`);
+          if (drift.extra.length > 0) io.out(`off (should be on): ${drift.extra.join(", ")}`);
+          io.out(`repair: playpilot sim prepare ${udid}${profilePath ? ` --profile ${profilePath}` : ""}`);
+          return 1;
+        }
+        if (sub === "restore") {
+          io.out((await slimmer.restore(udid)) ? `restored ${udid}` : `${udid} was not slimmed`);
+          return 0;
+        }
         if (sub === "measure") {
-          io.out(JSON.stringify(await simslim.measure(udid)));
+          io.out(JSON.stringify(await slimmer.measure(udid)));
           return 0;
         }
         throw new UsageError(`unknown sim command "${sub ?? ""}"`);
