@@ -1,8 +1,8 @@
 import { must, safeJson, asRecord, type Exec } from "../exec.js";
 
 /**
- * Thin wrapper over the simslim CLI (MobAI-App/simslim, MIT). simslim switches off the iOS simulator's background
- * daemons a game never needs, so each simulator uses about a quarter of the memory. PlayPilot only shells out to it.
+ * Slim simulators: switches off the iOS simulator's background daemons a game never needs, so each simulator uses
+ * about a quarter of the memory. Shells out to the installed simslim CLI.
  */
 export interface Footprint {
   readonly processes: number | null;
