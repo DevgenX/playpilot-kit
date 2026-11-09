@@ -172,6 +172,25 @@ describe("cli", () => {
     return { text, out: (t) => text.push(t), err: (t) => text.push(t) };
   }
 
+  it("reads the probe after the frame, so an agent's options are never older than what the frame shows", async () => {
+    const { root } = await workspace();
+    const game = fakeGame({ root, probe: true, probeLag: true });
+    const scenarioPath = join(root, "scenario.json");
+    await (await import("node:fs/promises")).writeFile(scenarioPath, JSON.stringify({ ...base, video: false }));
+    const cwd = process.cwd();
+    process.chdir(root);
+    try {
+      const io = capture();
+      assert.equal(await main(["agent", "start", scenarioPath, "--out", "runs/lag"], game.exec, io), 0, io.text.join("\n"));
+      const act = capture();
+      assert.equal(await main(["agent", "act", "button:Play"], game.exec, act), 0, act.text.join("\n"));
+      assert.match(act.text.join("\n"), /screen=level/);
+      assert.match(act.text.join("\n"), /game:win/);
+    } finally {
+      process.chdir(cwd);
+    }
+  });
+
   it("drives an agent session one command per step, across processes", async () => {
     const { root } = await workspace();
     const game = fakeGame({ root });
