@@ -10,7 +10,7 @@ PlayPilot is a TypeScript CLI with no runtime dependencies. It drives devices th
                           Playtest engine (src/playtest.ts)
             observe -> options -> decide -> act -> detect -> record
              /          |            |              \
-     agent-device    simctl       probe files      simslim
+     device driver    simctl       probe files     slim profile
    (tree, input,   (fast frames,  (state, targets, (lean simulator)
     video, logs,    app data)      actions, errors)
     memory)
@@ -21,7 +21,7 @@ PlayPilot is a TypeScript CLI with no runtime dependencies. It drives devices th
 **Observe** (`Playtest.observe`)
 
 1. If the probe says the game is busy, wait for it (up to 10 s).
-2. In parallel: the accessibility snapshot (`agent-device snapshot -i --no-record`), a screenshot (`xcrun simctl io screenshot` on simulators, about three times faster than going through the UI test runner) and the probe's `state.json`.
+2. In parallel: the accessibility snapshot, a screenshot (`xcrun simctl io screenshot` on simulators, about three times faster than going through the UI test runner) and the probe's `state.json`.
 3. Shrink retina frames to screen points and save `frames/step-NNN.png`. Pixel coordinates in a frame are tap coordinates.
 4. Identify the screen (below) and decide whether the last action changed anything.
 5. Run the detectors and collect evidence for the step that caused it.
@@ -29,7 +29,7 @@ PlayPilot is a TypeScript CLI with no runtime dependencies. It drives devices th
 
 **Act** (`Playtest.act`)
 
-Device actions (press, tap, pan, fill, wait) go to `agent-device batch` in one call. Game actions go to the probe's inbox and finish when the game acks them. Each step is recorded with its timing and a replayable form: element refs are turned into selectors or coordinates, so replays do not depend on refs that change between runs.
+Device actions (press, tap, pan, fill, wait) go to the device in one batched call. Game actions go to the probe's inbox and finish when the game acks them. Each step is recorded with its timing and a replayable form: element refs are turned into selectors or coordinates, so replays do not depend on refs that change between runs.
 
 ## Options
 
@@ -87,15 +87,9 @@ A step "changed" the game when the screen id changed, or when more than 3% of a 
 | `frames/step-NNN.png` | One frame per observation, in screen points |
 | `run.mp4`, `contact-sheet.png` | The recording |
 | `steps.json` | Replayable steps (`playpilot replay`, `promote`) |
-| `replay.ad` | The same steps as an agent-device script |
+| `replay.ad` | The same steps as a standalone device script |
 | `report.json`, `report.md` | Findings, steps and evidence |
 
 ## Lean simulators
 
-`playpilot sim prepare` runs `simslim verify` with the profile and only runs `simslim on` when the simulator drifted, so it is cheap to call before every run. Slim simulators use about a quarter of the memory, which lets several agents play at once on one Mac.
-
-## Credits
-
-- [agent-device](https://github.com/callstack/agent-device) (MIT): device control, video, logs, memory sampling and `.ad` replays.
-- [simslim](https://github.com/MobAI-App/simslim) (MIT): lean iOS simulators.
-- [Aura Autopilot](https://github.com/ramenvr/autopilot) (Apache-2.0): the game-agent design (game-level options, a decider, executors, per-game memory), re-implemented here independently.
+`playpilot sim prepare` checks the simulator against the profile and only re-slims it when it drifted, so it is cheap to call before every run. Slim simulators use about a quarter of the memory, which lets several agents play at once on one Mac.
