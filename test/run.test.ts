@@ -1,3 +1,4 @@
+import { ALL_LABELS } from "../src/slim/catalog.js";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -21,7 +22,7 @@ describe("autonomous runs against the fake game", () => {
   it("explores, never buys, finds the crash with evidence, and writes a complete run folder", async () => {
     const { root, out, memoryDir } = await workspace();
     const game = fakeGame({ root });
-    const report = await runScenario({ ...base, seed: 3, device: { udid: UDID }, simslim: { requires: [] } }, root, {
+    const report = await runScenario({ ...base, seed: 3, device: { udid: UDID }, slim: { requires: [] } }, root, {
       exec: game.exec,
       outDir: out,
       memoryDir,
@@ -41,7 +42,9 @@ describe("autonomous runs against the fake game", () => {
       assert.equal(report.outcome, "explored");
     }
     assert.ok(!report.findings.some((f) => f.kind === "error_log" && /xctest|error: \(null\)/.test(f.message)), "test-runner noise is not a finding");
-    assert.equal(report.simulator.footprintMb, 900);
+    assert.equal(report.simulator.repaired, true, "the stock simulator was slimmed before the run");
+    assert.equal(game.sim.disabled.size, ALL_LABELS.size);
+    assert.equal(report.simulator.footprintMb, 1 + (game.sim.processCount - 1) * 20, "memory measured after slimming");
 
     const files = await readdir(out);
     for (const f of ["report.md", "report.json", "steps.json", "replay.ad", "scenario.json", "run.mp4", "contact-sheet.png", "frames"]) assert.ok(files.includes(f), `missing ${f}`);
@@ -107,10 +110,10 @@ describe("autonomous runs against the fake game", () => {
     );
   });
 
-  it("fails cleanly when simslim cannot slim a simulator it was not given", async () => {
+  it("fails cleanly when asked to slim without a simulator UDID", async () => {
     const { root, out, memoryDir } = await workspace();
     const game = fakeGame({ root });
-    const report = await runScenario({ ...base, simslim: {} }, root, { exec: game.exec, outDir: out, memoryDir });
+    const report = await runScenario({ ...base, slim: {} }, root, { exec: game.exec, outDir: out, memoryDir });
     assert.equal(report.outcome, "error");
     assert.match(report.note, /--udid/);
   });
