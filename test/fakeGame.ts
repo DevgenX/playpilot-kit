@@ -65,6 +65,8 @@ export interface FakeGame {
 export interface FakeOptions {
   readonly root: string;
   readonly probe?: boolean;
+  /** The probe reports a new screen only once a frame of it is captured (a slow device: the frame outruns the state file). */
+  readonly probeLag?: boolean;
   /** Services already switched off on the fake simulator. */
   readonly disabled?: readonly string[];
 }
@@ -148,8 +150,17 @@ export function fakeGame(options: FakeOptions): FakeGame {
     await writeFile(join(probeDir, "state.json"), JSON.stringify(state));
   };
 
+  let probeBehind = false;
   const go = async (to: Screen): Promise<void> => {
     screen = to;
+    if (options.probeLag) probeBehind = true;
+    else await writeProbe();
+  };
+  // a real screenshot takes a while, and the screen finishes drawing during it
+  const catchUp = async (): Promise<void> => {
+    if (!probeBehind) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    probeBehind = false;
     await writeProbe();
   };
 
@@ -205,6 +216,7 @@ export function fakeGame(options: FakeOptions): FakeGame {
       case "screenshot":
         frameNo += 1;
         await writeFile(rest[0] ?? join(root, "shot.png"), encodePng(frame(screen, frameNo, 1)));
+        await catchUp();
         return ok({ path: rest[0] });
       case "snapshot": {
         if (screen === "Crashed") return fail("COMMAND_FAILED", "app is not running", "app_not_running");
@@ -255,6 +267,7 @@ export function fakeGame(options: FakeOptions): FakeGame {
       if (args[1] === "io") {
         frameNo += 1;
         await writeFile(args[args.length - 1] ?? join(root, "shot.png"), encodePng(frame(screen, frameNo, 3)));
+        await catchUp();
         return { code: 0, stdout: "", stderr: "" };
       }
       if (args[1] === "get_app_container") return { code: 0, stdout: container + "\n", stderr: "" };
