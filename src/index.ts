@@ -1,7 +1,8 @@
 export { AgentDevice, actionArgs, parseSnapshot, type SessionOptions, type Snapshot } from "./adapters/agentDevice.js";
 export { AdbTransport, LocalTransport, ProbeChannel, parseProbeEvent, parseProbeState, type ProbeEvent } from "./adapters/probe.js";
 export { Simctl } from "./adapters/simctl.js";
-export { Simslim } from "./adapters/simslim.js";
+export { FULL_SLIM, loadProfile, offLabels, parseProfile, Slimmer, type Drift, type Footprint, type SlimProfile } from "./adapters/slim.js";
+export { CATEGORIES, CATEGORY_IDS, type SlimCategory } from "./slim/catalog.js";
 export { doctor, type Check } from "./doctor.js";
 export { recordingExec, spawnExec, type Exec, type ExecResult } from "./exec.js";
 export { ExploreDecider, ScriptedDecider, seededRandom } from "./harness/deciders.js";
