@@ -1,6 +1,7 @@
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !PLAYPILOT_DISABLE
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,6 +32,7 @@ namespace PlayPilotKit
         // A rename shows up after the next scene change.
         readonly Dictionary<int, Names> _names = new Dictionary<int, Names>();
         readonly StringBuilder _path = new StringBuilder(128);
+        readonly StringBuilder _label = new StringBuilder(64);
         int _count;
 
         /// <summary>Drops cached object names (called on scene changes).</summary>
@@ -98,8 +100,9 @@ namespace PlayPilotKit
                 if (label == null)
                 {
                     Text text = s.GetComponentInChildren<Text>();
-                    if (text != null && !string.IsNullOrWhiteSpace(text.text)) label = text.text;
+                    if (text != null) label = CleanLabel(text.text);
                 }
+                if (label == null) label = TmpLabel(s);
                 if (id == null || label == null)
                 {
                     Names names = GetNames(s.transform);
@@ -219,6 +222,43 @@ namespace PlayPilotKit
             json.Append(",\"h\":");
             PlayPilotJson.WriteFixed4(json, (maxY - minY) / height);
             json.Append('}');
+        }
+
+        // TextMesh Pro is found by name, so this package does not depend on it. TMP_Text lives in
+        // Unity.TextMeshPro both as a package and inside com.unity.ugui 2.x (Unity 6).
+        static bool s_TmpLooked;
+        static Type s_TmpType;
+        static PropertyInfo s_TmpText;
+
+        /// <summary>The text of the first TextMesh Pro text under the Selectable, or null.</summary>
+        string TmpLabel(Selectable s)
+        {
+            if (!s_TmpLooked)
+            {
+                s_TmpLooked = true;
+                s_TmpType = Type.GetType("TMPro.TMP_Text, Unity.TextMeshPro");
+                s_TmpText = s_TmpType?.GetProperty("text", BindingFlags.Public | BindingFlags.Instance);
+            }
+            if (s_TmpText == null) return null;
+            Component tmp = s.GetComponentInChildren(s_TmpType);
+            return tmp != null ? CleanLabel(s_TmpText.GetValue(tmp) as string) : null;
+        }
+
+        /// <summary>Rich text tags removed, whitespace collapsed; null when nothing readable is left.</summary>
+        string CleanLabel(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return null;
+            _label.Clear();
+            bool inTag = false, space = false;
+            foreach (char c in text)
+            {
+                if (c == '<') { inTag = true; continue; }
+                if (inTag) { if (c == '>') inTag = false; continue; }
+                if (char.IsWhiteSpace(c)) { space = _label.Length > 0; continue; }
+                if (space) { _label.Append(' '); space = false; }
+                _label.Append(c);
+            }
+            return _label.Length > 0 ? _label.ToString() : null;
         }
 
         string KindOf(Selectable s)
