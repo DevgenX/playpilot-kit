@@ -56,7 +56,7 @@ Each script entry is an option name (exact, then substring). A step that does no
 | `name`, `app`, `platform`, `goal` | required | `app` is the bundle id or package name; `platform` is `ios` or `android` |
 | `mode` | `explore` | `explore` or `scripted` |
 | `device` | none | `{ "udid": "..." }` (iOS) or `{ "serial": "..." }` (Android); `--udid` overrides |
-| `slim` | none | `{ "profile": "slim-game.json", "requires": [] }`: slim the simulator first; path relative to the scenario |
+| `slim` | none | `{ "profile": "slim-game.json", "requires": ["store"] }`: slim the simulator before the run (path relative to the scenario). `requires` names categories the game needs; the run stops if the profile turns them off. See `playpilot sim categories` |
 | `maxSteps`, `maxMinutes` | 30, 20 | Hard limits |
 | `seed` | 1 | Explorer randomness, for repeatable runs |
 | `script` | `[]` | Option names for `scripted` mode |
