@@ -67,6 +67,8 @@ export interface FakeOptions {
   readonly probe?: boolean;
   /** The probe reports a new screen only once a frame of it is captured (a slow device: the frame outruns the state file). */
   readonly probeLag?: boolean;
+  /** A tap is handled only while the next screenshot is taken (a busy device): that frame still shows the old screen. */
+  readonly inputLag?: boolean;
   /** Services already switched off on the fake simulator. */
   readonly disabled?: readonly string[];
 }
@@ -151,13 +153,26 @@ export function fakeGame(options: FakeOptions): FakeGame {
   };
 
   let probeBehind = false;
+  let pending: Screen | null = null;
   const go = async (to: Screen): Promise<void> => {
+    if (options.inputLag) {
+      pending = to;
+      return;
+    }
     screen = to;
     if (options.probeLag) probeBehind = true;
     else await writeProbe();
   };
   // a real screenshot takes a while, and the screen finishes drawing during it
   const catchUp = async (): Promise<void> => {
+    if (pending !== null) {
+      const to = pending;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      screen = to;
+      pending = null;
+      await writeProbe();
+      return;
+    }
     if (!probeBehind) return;
     await new Promise((resolve) => setTimeout(resolve, 100));
     probeBehind = false;
