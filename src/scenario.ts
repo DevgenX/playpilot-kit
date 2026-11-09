@@ -9,7 +9,7 @@ export interface Scenario {
   readonly app: string;
   readonly platform: "ios" | "android";
   readonly device: { readonly udid?: string; readonly name?: string; readonly serial?: string };
-  /** simslim profile (absolute path, resolved against the scenario file) and the features the game needs. */
+  /** Slim-simulator profile (absolute path, resolved against the scenario file) and the features the game needs. Scenario key `slim`. */
   readonly simslim: { readonly profile?: string; readonly requires: readonly string[] } | null;
   readonly mode: "explore" | "scripted";
   readonly goal: string;
@@ -73,7 +73,7 @@ export async function loadScenario(path: string): Promise<Scenario> {
 }
 
 const KNOWN_KEYS = new Set([
-  "$schema", "name", "app", "platform", "device", "simslim", "mode", "goal", "maxSteps", "maxMinutes", "seed", "script",
+  "$schema", "name", "app", "platform", "device", "slim", "simslim", "mode", "goal", "maxSteps", "maxMinutes", "seed", "script",
   "success", "avoid", "allowRisky", "canvas", "customOptions", "softlockActions", "slowStepMs", "settleMs", "launchWaitMs", "video",
   "memoryEvery", "probe", "appEventUrl", "launchArgs", "relaunch",
 ]);
@@ -146,11 +146,12 @@ export function parseAction(value: unknown, where: string): DeviceAction {
 export function absolutize(raw: unknown, baseDir: string): unknown {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return raw;
   const r = raw as Raw;
-  const sim = r["simslim"];
+  const key = r["slim"] !== undefined ? "slim" : "simslim";
+  const sim = r[key];
   if (sim === null || typeof sim !== "object" || Array.isArray(sim)) return raw;
   const profile = (sim as Raw)["profile"];
   if (typeof profile !== "string" || profile === "" || isAbsolute(profile)) return raw;
-  return { ...r, simslim: { ...(sim as Raw), profile: resolve(baseDir, profile) } };
+  return { ...r, [key]: { ...(sim as Raw), profile: resolve(baseDir, profile) } };
 }
 
 export function parseScenario(raw: unknown, baseDir = process.cwd()): Scenario {
@@ -197,14 +198,17 @@ export function parseScenario(raw: unknown, baseDir = process.cwd()): Scenario {
     }
   }
 
+  // "slim" is the documented key; "simslim" is still read for scenarios written before the rename
+  if (r["slim"] !== undefined && r["simslim"] !== undefined) throw new ScenarioError(`use "slim" only (not both "slim" and "simslim")`);
+  const slimKey = r["slim"] !== undefined ? "slim" : "simslim";
   let simslim: Scenario["simslim"] = null;
-  if (r["simslim"] !== undefined) {
-    const s = obj(r["simslim"], "simslim");
+  if (r[slimKey] !== undefined) {
+    const s = obj(r[slimKey], slimKey);
     const profile = s["profile"];
-    if (profile !== undefined && (typeof profile !== "string" || profile === "")) throw new ScenarioError(`simslim.profile must be a file path`);
+    if (profile !== undefined && (typeof profile !== "string" || profile === "")) throw new ScenarioError(`${slimKey}.profile must be a file path`);
     simslim = {
       ...(typeof profile === "string" ? { profile: isAbsolute(profile) ? profile : resolve(baseDir, profile) } : {}),
-      requires: strList(s["requires"], "simslim.requires"),
+      requires: strList(s["requires"], `${slimKey}.requires`),
     };
   }
 
