@@ -65,7 +65,7 @@ playpilot agent note "<what a player sees, and why it is wrong>" --severity <lev
 
 | Symptom | Do this |
 | --- | --- |
-| `doctor` says the daemon belongs to another install | Run the `agent-device daemon stop` fix it prints, then retry. |
+| `doctor` says the daemon belongs to another install | Run the `daemon stop` fix it prints, then retry. |
 | `start` fails with "needs a device" | Pass `--udid <udid>` of a booted simulator. |
 | Every option fails with a stale ref | `playpilot agent observe` to refresh, then act again. |
 | A crash ended the session | `finish` (outcome `not_achieved` if the goal was not met), then `replay <run-dir> --to-step <n>` to confirm it repeats. |
