@@ -22,6 +22,8 @@ The channel is plain files in the app's own data folder, so a probe needs no net
 | Native iOS | the app's `Documents` folder |
 | Native Android | `Context.getExternalFilesDir(null)` |
 
+Instances of one game on one machine share that data folder, so they would read each other's state and run each other's commands. A probe may take its whole folder from the command line instead; the Unity probe reads `-playpilotFolder=<path>` (`PlayPilot.Folder`). Give each instance its own, for example editor test runs side by side.
+
 How PlayPilot reaches it:
 
 - **iOS simulator.** `xcrun simctl get_app_container <udid> <bundle-id> data`, then `Documents/playpilot/`. The folder is on the Mac's disk, so reads and writes are plain file operations.
