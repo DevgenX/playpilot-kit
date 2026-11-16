@@ -68,6 +68,30 @@ namespace PlayPilotKit
         /// </summary>
         public static bool LogLines = false;
 
+        /// <summary>The command-line argument that gives the probe its own folder: <c>-playpilotFolder=&lt;path&gt;</c>.</summary>
+        public const string FolderArgument = "-playpilotFolder=";
+
+        /// <summary>
+        /// The folder of the probe's files (state.json, events.jsonl, inbox.json):
+        /// <c>Application.persistentDataPath/playpilot</c>, or the path given as <c>-playpilotFolder=&lt;path&gt;</c>
+        /// on the command line. Instances of one game on one machine (editor test runs side by side, a test farm) share
+        /// persistentDataPath, so without their own folders each reads the others' state and runs their commands.
+        /// </summary>
+        public static string Folder => s_Folder ??= FolderFrom(Environment.GetCommandLineArgs(), Application.persistentDataPath);
+
+        /// <summary>The folder <paramref name="args"/> ask for: the last <see cref="FolderArgument"/> with a path, else <paramref name="dataPath"/>/playpilot.</summary>
+        public static string FolderFrom(string[] args, string dataPath)
+        {
+            string folder = null;
+            if (args != null)
+                foreach (string a in args)
+                    if (a != null && a.Length > FolderArgument.Length && a.StartsWith(FolderArgument, StringComparison.Ordinal))
+                        folder = a.Substring(FolderArgument.Length);
+            return folder ?? System.IO.Path.Combine(dataPath ?? "", "playpilot");
+        }
+
+        static string s_Folder;
+
         /// <summary>Sets the finer-grained location, such as a menu or panel name. Null or empty clears it.</summary>
         public static void SetScreen(string screen)
         {

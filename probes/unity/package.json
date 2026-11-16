@@ -1,7 +1,7 @@
 {
   "name": "dev.playpilot.probe",
   "displayName": "PlayPilot Probe",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "unity": "2021.3",
   "description": "Debug-only game probe for PlayPilot. Shares the current scene, screen, facts, on-screen uGUI targets and engine errors with PlayPilot through plain files, and runs named game actions on request. Compiled into the Editor and development builds only.",
   "license": "Apache-2.0",

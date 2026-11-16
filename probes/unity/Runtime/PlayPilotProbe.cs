@@ -154,7 +154,7 @@ namespace PlayPilotKit
 
         void OpenFileChannel()
         {
-            string folder = Path.Combine(Application.persistentDataPath, "playpilot");
+            string folder = PlayPilot.Folder;
             _statePath = Path.Combine(folder, "state.json");
             _stateTempPath = _statePath + ".tmp";
             _eventsPath = Path.Combine(folder, "events.jsonl");

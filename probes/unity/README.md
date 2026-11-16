@@ -9,6 +9,8 @@ A small, debug-only probe that lets PlayPilot see and drive your Unity game from
 
 Requires Unity 2021.3 or newer and uGUI (`com.unity.ugui`). No other dependencies.
 
+Running several instances of the game on one machine, such as editor test runs side by side? They share `persistentDataPath`, so give each its own folder on the command line with `-playpilotFolder=<path>`. `PlayPilot.Folder` is the folder in use.
+
 ## Install
 
 In Unity, open **Window > Package Manager > + > Add package from git URL** and enter:
